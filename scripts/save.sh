@@ -82,11 +82,11 @@ state_format() {
 }
 
 dump_panes_raw() {
-	tmux list-panes -a -F "$(pane_format)"
+	tmux list-panes -a -F "$(pane_format)" -f "#{==:#{session_name},${CURRENT_SESSION}}"
 }
 
 dump_windows_raw(){
-	tmux list-windows -a -F "$(window_format)"
+	tmux list-windows -a -F "$(window_format)" -f "#{==:#{session_name},${CURRENT_SESSION}}"
 }
 
 toggle_window_zoom() {
@@ -159,7 +159,7 @@ get_alternate_window_index() {
 dump_grouped_sessions() {
 	local current_session_group=""
 	local original_session
-	tmux list-sessions -F "$(grouped_sessions_format)" |
+	tmux list-sessions -F "$(grouped_sessions_format)" -f "#{==:#{session_name},${CURRENT_SESSION}}" |
 		grep "^1" |
 		cut -c 3- |
 		sort |
@@ -237,7 +237,7 @@ remove_old_backups() {
 
 save_all() {
 	local resurrect_file_path="$(resurrect_file_path)"
-	local last_resurrect_file="$(last_resurrect_file)"
+	local last_resurrect_file="$(current_resurrect_file)"
 	mkdir -p "$(resurrect_dir)"
 	fetch_and_dump_grouped_sessions > "$resurrect_file_path"
 	dump_panes   >> "$resurrect_file_path"

@@ -27,14 +27,6 @@ is_line_type() {
 		\grep -q "^$line_type"
 }
 
-check_saved_session_exists() {
-	local resurrect_file="$(last_resurrect_file)"
-	if [ ! -f $resurrect_file ]; then
-		display_message "Tmux resurrect file not found!"
-		return 1
-	fi
-}
-
 pane_exists() {
 	local session_name="$1"
 	local window_number="$2"
@@ -363,25 +355,38 @@ cleanup_restored_pane_contents() {
 	fi
 }
 
+get_saved_sessions() {
+	local all_files="$(ls $(resurrect_dir))"
+	for file in $all_files; do
+		if [[ "$file" =~ _last$ ]] && [[ "${file%%_last}" != "$CURRENT_SESSION" ]]; then
+			echo "${file%%_last}"
+		fi
+	done
+}
+
 main() {
-	if supported_tmux_version_ok && check_saved_session_exists; then
-		start_spinner "Restoring..." "Tmux restore complete!"
-		execute_hook "pre-restore-all"
-		restore_all_panes
-		handle_session_0
-		restore_window_properties >/dev/null 2>&1
-		execute_hook "pre-restore-pane-processes"
-		restore_all_pane_processes
-		# below functions restore exact cursor positions
-		restore_active_pane_for_each_window
-		restore_zoomed_windows
-		restore_grouped_sessions  # also restores active and alt windows for grouped sessions
-		restore_active_and_alternate_windows
-		restore_active_and_alternate_sessions
-		cleanup_restored_pane_contents
-		execute_hook "post-restore-all"
-		stop_spinner
-		display_message "Tmux restore complete!"
+	if supported_tmux_version_ok; then
+		local resurrect_file="$(get_saved_sessions|fzf)"
+		if [[ -n "$resurrect_file" ]]; then
+		ln -fs "$(resurrect_dir)/${resurrect_file}_last" "$(resurrect_dir)/last"
+			start_spinner "Restoring..." "Tmux restore complete!"
+			execute_hook "pre-restore-all"
+			restore_all_panes
+			handle_session_0
+			restore_window_properties >/dev/null 2>&1
+			execute_hook "pre-restore-pane-processes"
+			restore_all_pane_processes
+			# below functions restore exact cursor positions
+			restore_active_pane_for_each_window
+			restore_zoomed_windows
+			restore_grouped_sessions  # also restores active and alt windows for grouped sessions
+			restore_active_and_alternate_windows
+			restore_active_and_alternate_sessions
+			cleanup_restored_pane_contents
+			execute_hook "post-restore-all"
+			stop_spinner
+			display_message "Tmux restore complete!"
+		fi
 	fi
 }
 main

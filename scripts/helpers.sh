@@ -10,6 +10,7 @@ RESURRECT_FILE_PREFIX="tmux_resurrect"
 RESURRECT_FILE_EXTENSION="txt"
 _RESURRECT_DIR=""
 _RESURRECT_FILE_PATH=""
+CURRENT_SESSION=$(tmux display-message -p '#S')
 
 d=$'\t'
 
@@ -100,7 +101,7 @@ resurrect_dir() {
 	if [ -z "$_RESURRECT_DIR" ]; then
 		local path="$(get_tmux_option "$resurrect_dir_option" "$default_resurrect_dir")"
 		# expands tilde, $HOME and $HOSTNAME if used in @resurrect-dir
-		echo "$path" | sed "s,\$HOME,$HOME,g; s,\$HOSTNAME,$(hostname),g; s,\~,$HOME,g"
+		echo "$path" | sed "s,\$HOME,$HOME,g; s,\~,$HOME,g"
 	else
 		echo "$_RESURRECT_DIR"
 	fi
@@ -110,7 +111,7 @@ _RESURRECT_DIR="$(resurrect_dir)"
 resurrect_file_path() {
 	if [ -z "$_RESURRECT_FILE_PATH" ]; then
 		local timestamp="$(date +"%Y%m%dT%H%M%S")"
-		echo "$(resurrect_dir)/${RESURRECT_FILE_PREFIX}_${timestamp}.${RESURRECT_FILE_EXTENSION}"
+		echo "$(resurrect_dir)/${CURRENT_SESSION}_${RESURRECT_FILE_PREFIX}_${timestamp}.${RESURRECT_FILE_EXTENSION}"
 	else
 		echo "$_RESURRECT_FILE_PATH"
 	fi
@@ -119,6 +120,10 @@ _RESURRECT_FILE_PATH="$(resurrect_file_path)"
 
 last_resurrect_file() {
 	echo "$(resurrect_dir)/last"
+}
+
+current_resurrect_file() {
+	echo "$(resurrect_dir)/${CURRENT_SESSION}_last"
 }
 
 pane_contents_dir() {
