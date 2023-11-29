@@ -372,7 +372,7 @@ get_sessions() {
 
 main() {
 	if supported_tmux_version_ok; then
-		local session_name="$(get_sessions|uniq|fzf)"
+		local session_name="$(get_sessions|sort|uniq|fzf)"
 		if [[ -n "$session_name" ]]; then
 			if [[ -n $(tmux list-sessions -F "#{session_name}" | grep "$session_name") ]]; then
 				tmux switch-client -t "$session_name"
